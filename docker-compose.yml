@@ -24,7 +24,7 @@ x-refs:
       MEILI_ENV: production
       MEILI_MASTER_KEY:
       MEILI_NO_SENTRY: "true"
-      MEILI_DUMPS_DIR: /dumps
+      MEILI_DUMP_DIR: /dumps
       MEILI_DB_PATH: /database/data.ms
       MEILI_SNAPSHOT_DIR: /snapshots
       MEILI_SCHEDULE_SNAPSHOT: "1800"
