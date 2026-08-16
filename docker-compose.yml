@@ -11,10 +11,19 @@ x-refs:
       update_config:
         parallelism: 2
   server: &server
-    image: getmeili/meilisearch:latest
-    command: sh -c 'rm -rf /database/data.ms; /bin/meilisearch --ignore-missing-snapshot --ignore-snapshot-if-db-exists --import-snapshot /snapshots/data.ms.snapshot'
+    # Pinned, and it has to stay pinned. A snapshot is written by one version of
+    # Meilisearch and read by that same version; `latest` moving under a database that
+    # was built by an older build is how the index disappears rather than how it
+    # upgrades. Moving this pin is a migration, not a version bump: dump or re-import
+    # the documents, do not expect the snapshot to carry across.
+    image: getmeili/meilisearch:v1.53.1
+    # No command. It used to be
+    #   sh -c 'rm -rf /database/data.ms; meilisearch --import-snapshot ...'
+    # which deleted the database on every single boot and rebuilt it from the snapshot,
+    # so the snapshot was the only copy of the data and the volume held nothing that
+    # outlived a restart. Meilisearch keeps its own database in the volume; the
+    # scheduled snapshots below are the backup, not the storage.
     user: root
-    container_name: meilisearch
     <<: *restart
     networks:
       - meili
@@ -22,7 +31,9 @@ x-refs:
       - 7700:7700
     environment:
       MEILI_ENV: production
-      MEILI_MASTER_KEY:
+      # Explicit, not the bare pass-through form: under Portainer and Swarm the bare
+      # form reads the daemon's environment rather than the stack's.
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
       MEILI_NO_SENTRY: "true"
       MEILI_DUMP_DIR: /dumps
       MEILI_DB_PATH: /database/data.ms
